@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"name": "lab4",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"iostream": "cpp",
+			"*.tcc": "cpp",
+			"deque": "cpp",
+			"forward_list": "cpp",
+			"list": "cpp"
+		}
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": []
+	}
+}
