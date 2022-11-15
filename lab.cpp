@@ -20,11 +20,11 @@ struct schedule
 {
     int schedulerNumber;
     int quantum;
-    float meanTurnAround;
-    float meanNormTurn;
-    float totalWaitTime;
-    float totalTurnAroundTime;
-    float totalNormTurn;
+    float meanTurnAround = 0.0;
+    float meanNormTurn = 0.0;
+    float totalWaitTime = 0.0;
+    float totalTurnAroundTime = 0.0;
+    float totalNormTurn = 0.0;
     string schedulerName;
 };
 schedule scheduleMaker(int schNo)
@@ -141,7 +141,7 @@ void IamWaiting(vector<process> &waitingProcess, int t)
         waitingProcess[i].timeProcessing[t] = ".";
     }
 }
-void processRemover(process p1, vector<process> &ProcessList)
+void processRemover(process &p1, vector<process> &ProcessList)
 {
     for (size_t i = 0; i < ProcessList.size(); i++)
     {
@@ -172,7 +172,7 @@ void calculateTurnandNormTurnTime(vector<process> &processess_filtered)
         processess_filtered[j].normTurnTime = float(processess_filtered[j].turnAroundTime) / float(processess_filtered[j].serviceTime);
     }
 }
-void calculateScheduleStats(schedule &schedule, vector<process> processess_filtered)
+void calculateScheduleStats(schedule &schedule, vector<process> &processess_filtered, int noProcess)
 {
     for (size_t i = 0; i < processess_filtered.size(); i++)
     {
@@ -180,8 +180,8 @@ void calculateScheduleStats(schedule &schedule, vector<process> processess_filte
         schedule.totalTurnAroundTime += processess_filtered[i].turnAroundTime;
         schedule.totalNormTurn += processess_filtered[i].normTurnTime;
     }
-    schedule.meanTurnAround = schedule.totalTurnAroundTime / processess_filtered.size();
-    schedule.meanNormTurn = schedule.totalNormTurn / processess_filtered.size();
+    schedule.meanTurnAround = schedule.totalTurnAroundTime / noProcess;
+    schedule.meanNormTurn = schedule.totalNormTurn / noProcess;
 }
 bool orderchecker(process p1, process p2)
 {
@@ -191,23 +191,21 @@ void sortProcessess(vector<process> &processess_filtered)
 {
     sort(processess_filtered.begin(), processess_filtered.end(), orderchecker);
 }
-bool isShorterProcess(process waitingProcess, process p)
+bool isShorterProcess(process p1, process p2)
 {
-    return (waitingProcess.tempServiceTime <= p.tempServiceTime);
+    return (p1.tempServiceTime > p2.tempServiceTime);
 }
-void changeToShortestProcess(vector<process> &waitingProcess, vector<process> &processingProcess, process &p)
+void sortProcessesbyservicetime(vector<process> &processList)
 {
-    
-    for (size_t k = 0; k < waitingProcess.size(); k++)
-    {
-        if (isShorterProcess(waitingProcess[k], p))
-        {
-            waitingProcess.push_back(p);
-            processingProcess.pop_back();
-            p = waitingProcess[k];
-            processingProcess.push_back(p);
-        }
-    }
+    sort(processList.begin(), processList.end(), isShorterProcess);
+}
+bool isShorterHRRNProcess(process p1, process p2)
+{
+    return (((float(p1.waitTime) + (p1.serviceTime)) / float(p1.serviceTime)) < (((p2.waitTime) + float(p2.serviceTime)) / float(p2.serviceTime)));
+}
+void sortProcessbyHRRN(vector<process> &processList)
+{
+    sort(processList.begin(), processList.end(), isShorterHRRNProcess);
 }
 process getshortest(vector<process> waitingProcess, vector<process> &processingProcess, process &p)
 {
@@ -380,6 +378,7 @@ int main()
 {
     regex integer("(\\+|-)?[[:digit:]]+");
     // ############## TAKING INPUT #############
+
     // taking type
     string type;
     cin >> type;
@@ -445,7 +444,6 @@ int main()
 
     // ##################END OF INPUT##################
     // #################Processing ###################
-
     for (size_t i = 0; i < schedulers_filtered.size(); i++)
     {
         // Setup
@@ -481,7 +479,7 @@ int main()
                 }
             }
             calculateTurnandNormTurnTime(notHereYetProcess);
-            calculateScheduleStats(schedulers_filtered[i], notHereYetProcess);
+            calculateScheduleStats(schedulers_filtered[i], notHereYetProcess, noProcesses);
             fillSpaces(notHereYetProcess);
             sortProcessess(notHereYetProcess);
             printer(type, schedulers_filtered[i], notHereYetProcess, noCycles);
@@ -533,7 +531,7 @@ int main()
                 }
             }
             calculateTurnandNormTurnTime(finishedProcess);
-            calculateScheduleStats(schedulers_filtered[i], finishedProcess);
+            calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
             fillSpaces(finishedProcess);
             sortProcessess(finishedProcess);
             printer(type, schedulers_filtered[i], finishedProcess, noCycles);
@@ -589,7 +587,7 @@ int main()
                 }
             }
             calculateTurnandNormTurnTime(finishedProcess);
-            calculateScheduleStats(schedulers_filtered[i], finishedProcess);
+            calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
             fillSpaces(finishedProcess);
             sortProcessess(finishedProcess);
             printer(type, schedulers_filtered[i], finishedProcess, noCycles);
@@ -597,13 +595,85 @@ int main()
         if (schedulers_filtered[i].schedulerName == "SRT")
         {
             int t = 0;
+            process p;
             while (true)
             {
-                process p;
                 checkArrival(notHereYetProcess, t, waitingProcess);
                 if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0))
                 {
-                    changeToShortestProcess(waitingProcess, processingProcess, p);
+                    sortProcessesbyservicetime(waitingProcess);
+                    process p = waitingProcess.back();
+                    processingProcess.push_back(p);
+                    processRemover(p, waitingProcess);
+                }
+                if (!(processingProcess.size() == 0))
+                {
+                    if (processingProcess[0].tempServiceTime == 0)
+                    {
+                        processingProcess[0].finishTime = t;
+                        finishedProcess.push_back(processingProcess[0]);
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                        sortProcessesbyservicetime(waitingProcess);
+                        processingProcess.clear();
+
+                        if (waitingProcess.size() != 0)
+                        {
+                            process p = waitingProcess.back();
+                            processingProcess.push_back(p);
+                            processRemover(p, waitingProcess);
+                        }
+                        else
+                        {
+                            checkArrival(notHereYetProcess, t, waitingProcess);
+                        }
+                        IamWaiting(waitingProcess, t);
+                    }
+
+                    if (processingProcess[0].tempServiceTime != 0)
+                    {
+                        processingProcess[0].timeProcessing[t] = "*";
+                        t++;
+                        processingProcess[0].tempServiceTime--;
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                        waitingProcess.push_back(processingProcess[0]);
+                        processingProcess.clear();
+                        sortProcessesbyservicetime(waitingProcess);
+                        if (waitingProcess.size() != 0)
+                        {
+                            process p = waitingProcess.back();
+                            processingProcess.push_back(p);
+                            processRemover(p, waitingProcess);
+                        }
+                        else
+                        {
+                            checkArrival(notHereYetProcess, t, waitingProcess);
+                        }
+                        IamWaiting(waitingProcess, t);
+                    }
+                }
+                if (notHereYetProcess.size() == 0 && processingProcess.size() == 0 && waitingProcess.size() == 0)
+                {
+                    break;
+                }
+            }
+            calculateTurnandNormTurnTime(finishedProcess);
+            calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
+            fillSpaces(finishedProcess);
+            sortProcessess(finishedProcess);
+            printer(type, schedulers_filtered[i], finishedProcess, noCycles);
+        }
+        if (schedulers_filtered[i].schedulerName == "HRRN")
+        {
+            int t = 0;
+            process p;
+            while (true)
+            {
+                checkArrival(notHereYetProcess, t, waitingProcess);
+                if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0))
+                {
+                    process p = waitingProcess.back();
+                    processingProcess.push_back(p);
+                    processRemover(p, waitingProcess);
                 }
                 if (!(processingProcess.size() == 0))
                 {
@@ -613,59 +683,41 @@ int main()
                         t++;
                         processingProcess[0].tempServiceTime--;
                         checkArrival(notHereYetProcess, t, waitingProcess);
-                        changeToShortestProcess(waitingProcess, processingProcess, p);
+                        IamWaiting(waitingProcess, t);
                     }
+
                     if (processingProcess[0].tempServiceTime == 0)
                     {
                         processingProcess[0].finishTime = t;
                         finishedProcess.push_back(processingProcess[0]);
-                        changeToShortestProcess(waitingProcess, processingProcess, p);
+                        checkArrival(notHereYetProcess, t, waitingProcess);
                         IamWaiting(waitingProcess, t);
                     }
-
-                    if (processingProcess[0].tempServiceTime != 0)
-                    {
-                        changeToShortestProcess(waitingProcess, processingProcess, p);
-                        IamWaiting(waitingProcess, t);
-                    }
+                    sortProcessbyHRRN(waitingProcess);
                     processingProcess.pop_back();
-                    // if (processingProcess[0].tempServiceTime != 0)
-                    // {
-                    //     waitingProcess.insert(waitingProcess.begin(), processingProcess[0]);
-                    //     IamWaiting(waitingProcess, t);
-                    // }
-                    // else
-                    // {
-                    //     processingProcess[0].finishTime = t;
-                    //     finishedProcess.push_back(processingProcess[0]);
-                    //     IamWaiting(waitingProcess, t);
-                    // }
                 }
+
                 if (notHereYetProcess.size() == 0 && processingProcess.size() == 0 && waitingProcess.size() == 0)
                 {
                     break;
                 }
             }
             calculateTurnandNormTurnTime(finishedProcess);
-            calculateScheduleStats(schedulers_filtered[i], finishedProcess);
-            fillSpaces(finishedProcess);
-            sortProcessess(finishedProcess);
-            printer(type, schedulers_filtered[i], finishedProcess, noCycles);
-        }
-        if (schedulers_filtered[i].schedulerName == "HRRN")
-        {
-
-            calculateTurnandNormTurnTime(finishedProcess);
-            calculateScheduleStats(schedulers_filtered[i], finishedProcess);
+            calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
             fillSpaces(finishedProcess);
             sortProcessess(finishedProcess);
             printer(type, schedulers_filtered[i], finishedProcess, noCycles);
         }
         if (schedulers_filtered[i].schedulerName == "FB-1")
         {
-
+            int t = 0;
+            while (true)
+            {
+                process p;
+                int q = schedulers_filtered[i].quantum;
+            }
             calculateTurnandNormTurnTime(finishedProcess);
-            calculateScheduleStats(schedulers_filtered[i], finishedProcess);
+            calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
             fillSpaces(finishedProcess);
             sortProcessess(finishedProcess);
             printer(type, schedulers_filtered[i], finishedProcess, noCycles);
@@ -674,7 +726,7 @@ int main()
         {
 
             calculateTurnandNormTurnTime(finishedProcess);
-            calculateScheduleStats(schedulers_filtered[i], finishedProcess);
+            calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
             fillSpaces(finishedProcess);
             sortProcessess(finishedProcess);
             printer(type, schedulers_filtered[i], finishedProcess, noCycles);
@@ -683,7 +735,7 @@ int main()
         {
 
             calculateTurnandNormTurnTime(finishedProcess);
-            calculateScheduleStats(schedulers_filtered[i], finishedProcess);
+            calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
             fillSpaces(finishedProcess);
             sortProcessess(finishedProcess);
             printer(type, schedulers_filtered[i], finishedProcess, noCycles);
