@@ -14,6 +14,7 @@ struct process
     int finishTime = 0;
     int turnAroundTime = 0;
     float normTurnTime = 0;
+    int feedback_level=0;
     vector<string> timeProcessing;
 };
 struct schedule
@@ -207,19 +208,22 @@ void sortProcessbyHRRN(vector<process> &processList)
 {
     sort(processList.begin(), processList.end(), isShorterHRRNProcess);
 }
-process getshortest(vector<process> waitingProcess, vector<process> &processingProcess, process &p)
+void IamMoreImportant(vector<process> &waitingProcess, int t)
 {
-    for (size_t k = 0; k < waitingProcess.size(); k++)
+    for (size_t i = 0; i < waitingProcess.size(); i++)
     {
-        if (isShorterProcess(waitingProcess[k], p))
-        {
-            waitingProcess.push_back(p);
-            processingProcess.pop_back();
-            p = waitingProcess[k];
-            processingProcess.push_back(p);
-        }
+        waitingProcess[i].serviceTime++;
+        waitingProcess[i].waitTime++;
+        waitingProcess[i].timeProcessing[t] = ".";
     }
-    return p;
+}
+bool isMoreImportant(process p1, process p2)
+{
+    return (p1.serviceTime < p2.serviceTime);
+}
+void sortProcessbyAging(vector<process> &processList)
+{
+    sort(processList.begin(), processList.end(), isMoreImportant);
 }
 // PRINTERS
 void printTrace(schedule schedule, vector<process> finsihed, int noCycles)
@@ -711,10 +715,18 @@ int main()
         if (schedulers_filtered[i].schedulerName == "FB-1")
         {
             int t = 0;
+            vector < queue < process >> feedback_queues;
             while (true)
             {
                 process p;
                 int q = schedulers_filtered[i].quantum;
+                checkArrival(notHereYetProcess, t, waitingProcess);
+
+
+                if (notHereYetProcess.size() == 0 && processingProcess.size() == 0 && waitingProcess.size() == 0 && feedback_queues.size() == 0)
+                {
+                    break;
+                }
             }
             calculateTurnandNormTurnTime(finishedProcess);
             calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
@@ -733,7 +745,68 @@ int main()
         }
         if (schedulers_filtered[i].schedulerName == "Aging")
         {
+            int t = 0;
+            while (true)
+            {
+                process p;
+                int q = schedulers_filtered[i].quantum;
+                checkArrival(notHereYetProcess, t, waitingProcess);
+                if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0))
+                {
+                    sortProcessbyAging(waitingProcess);
+                    process p = waitingProcess.back();
+                    processingProcess.push_back(p);
+                    processRemover(p, waitingProcess);
+                }
+                if (!(processingProcess.size() == 0))
+                {
+                    while (q)
+                    {
+                        processingProcess[0].timeProcessing[t] = "*";
+                        t++;
+                        q--;
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                        sortProcessbyAging(waitingProcess);
+                        IamMoreImportant(waitingProcess, t);
+                    }
 
+                    if (!q)
+                    {
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                        waitingProcess.push_back(processingProcess[0]);
+                        processingProcess.clear();
+                        sortProcessbyAging(waitingProcess);
+                        if (waitingProcess.size() != 0)
+                        {
+                            process p = waitingProcess.back();
+                            processingProcess.push_back(p);
+                            processRemover(p, waitingProcess);
+                        }
+                        else
+                        {
+                            checkArrival(notHereYetProcess, t, waitingProcess);
+                        }
+                        IamMoreImportant(waitingProcess, t);
+                        q++;
+                        if (t == noCycles - 1)
+                        {
+                            for (size_t k = 0; k < waitingProcess.size(); k++)
+                            {
+                                finishedProcess.push_back(waitingProcess[k]);
+                            }
+                            for (size_t k = 0; k < processingProcess.size(); k++)
+                            {
+                                finishedProcess.push_back(processingProcess[k]);
+                            }
+                            for (size_t k = 0; k < notHereYetProcess.size(); k++)
+                            {
+                                finishedProcess.push_back(notHereYetProcess[k]);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
             calculateTurnandNormTurnTime(finishedProcess);
             calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
             fillSpaces(finishedProcess);
