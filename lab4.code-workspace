@@ -14,7 +14,15 @@
 			"*.tcc": "cpp",
 			"deque": "cpp",
 			"forward_list": "cpp",
-			"list": "cpp"
+			"list": "cpp",
+			"array": "cpp",
+			"bitset": "cpp",
+			"initializer_list": "cpp",
+			"ranges": "cpp",
+			"span": "cpp",
+			"string_view": "cpp",
+			"utility": "cpp",
+			"valarray": "cpp"
 		}
 	},
 	"launch": {

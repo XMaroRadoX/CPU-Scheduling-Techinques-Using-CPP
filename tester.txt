@@ -18,11 +18,3 @@ cat 09a-input.txt | ./lab4 | diff 09a-output.txt -
 cat 09b-input.txt | ./lab4 | diff 09b-output.txt -
 cat 10a-input.txt | ./lab4 | diff 10a-output.txt -
 cat 10b-input.txt | ./lab4 | diff 10b-output.txt -
-
-
-
-
-
-
-
-cat 01b-input.txt | ./lab4 | diff 01b-output.txt -

@@ -15,6 +15,7 @@ struct process
     int feedback_level = 0;
     int turnAroundTime = 0;
     float normTurnTime = 0;
+    int timesliceinFB2i = 1;
     vector<string> timeProcessing;
 };
 struct schedule
@@ -351,7 +352,7 @@ void printStats(schedule schedule, vector<process> finsihed, int noCycles)
     }
     else
     {
-        if (schedule.schedulerName == "FB-1" || schedule.schedulerName == "FB-2i")
+        if (schedule.schedulerName == "FB-1" || schedule.schedulerName == "FB-2i" || schedule.schedulerName == "Aging")
         {
             schedulePrinted = schedule.schedulerName;
         }
@@ -818,6 +819,7 @@ int main()
                 {
                     while (q && processingProcess[0].tempServiceTime != 0)
                     {
+                        IamWaiting(waitingProcess, t);
                         waitingInTheHallows(feedback_queues, t);
                         processingProcess[0].timeProcessing[t] = "*";
                         t++;
@@ -855,6 +857,7 @@ int main()
                         {
                             getFromTheHallows(feedback_queues, processingProcess);
                         }
+                        IamWaiting(waitingProcess, t);
                         waitingInTheHallows(feedback_queues, t);
                     }
                 }
@@ -876,7 +879,6 @@ int main()
             while (true)
             {
                 process p;
-                int q = schedulers_filtered[i].quantum;
                 checkArrival(notHereYetProcess, t, waitingProcess);
                 int feedback_empty = 1;
                 for (size_t m = 0; m < feedback_queues.size(); m++)
@@ -895,13 +897,15 @@ int main()
                 }
                 if (!(processingProcess.size() == 0))
                 {
-                    while (q && processingProcess[0].tempServiceTime != 0)
+                    int temp = ceil(pow(2, processingProcess[0].feedback_level));
+                    while (temp && processingProcess[0].tempServiceTime != 0)
                     {
+                        IamWaiting(waitingProcess, t);
                         waitingInTheHallows(feedback_queues, t);
                         processingProcess[0].timeProcessing[t] = "*";
                         t++;
                         processingProcess[0].tempServiceTime--;
-                        q--;
+                        temp--;
                         checkArrival(notHereYetProcess, t, waitingProcess);
                     }
                     if (processingProcess[0].tempServiceTime != 0)
@@ -934,6 +938,7 @@ int main()
                         {
                             getFromTheHallows(feedback_queues, processingProcess);
                         }
+                        IamWaiting(waitingProcess, t);
                         waitingInTheHallows(feedback_queues, t);
                     }
                 }

@@ -1,6 +1,6 @@
 .ONESHELL:
 CC = g++ -g
-all: clean binary run
+all: clean binary run 
 binary:
 	$(CC) lab.cpp -o lab4
 run: binary
