@@ -542,23 +542,26 @@ int main()
 
         if (schedulers_filtered[i].schedulerName == "FCFS")
         {
-            for (size_t j = 0; j < notHereYetProcess.size(); j++)
+            notHereYetProcess[0].finishTime = notHereYetProcess[0].serviceTime;
+            notHereYetProcess[0].turnAroundTime = notHereYetProcess[0].serviceTime;
+            notHereYetProcess[0].waitTime = 0;
+            for (size_t j = 1; j < notHereYetProcess.size(); j++)
             {
                 notHereYetProcess[j].finishTime = notHereYetProcess[j - 1].finishTime + notHereYetProcess[j].serviceTime;
                 notHereYetProcess[j].turnAroundTime = notHereYetProcess[j].finishTime - notHereYetProcess[j].arrivalTime;
                 notHereYetProcess[j].waitTime = notHereYetProcess[j].turnAroundTime - notHereYetProcess[j].serviceTime;
                 notHereYetProcess[j].normTurnTime = float(notHereYetProcess[j].turnAroundTime) / float(notHereYetProcess[j].serviceTime);
             }
-            for (int i = 0; i < noProcesses; i++)
+            for (int k = 0; k < noProcesses; k++)
             {
-                for (size_t j = notHereYetProcess[i].arrivalTime + notHereYetProcess[i].waitTime; j < notHereYetProcess[i].finishTime; j++)
+                for (size_t j = (notHereYetProcess[k].arrivalTime + notHereYetProcess[k].waitTime); j < notHereYetProcess[k].finishTime; j++)
                 {
-                    notHereYetProcess[i].timeProcessing[j] = "*";
+                    notHereYetProcess[k].timeProcessing[j] = "*";
                 }
 
-                for (size_t j = notHereYetProcess[i].arrivalTime; j < notHereYetProcess[i].finishTime - notHereYetProcess[i].serviceTime; j++)
+                for (size_t j = notHereYetProcess[k].arrivalTime; j < notHereYetProcess[k].finishTime - notHereYetProcess[k].serviceTime; j++)
                 {
-                    notHereYetProcess[i].timeProcessing[j] = ".";
+                    notHereYetProcess[k].timeProcessing[j] = ".";
                 }
             }
             calculateTurnandNormTurnTime(notHereYetProcess);
