@@ -12,9 +12,9 @@ struct process
     int tempServiceTime;
     int waitTime = 0;
     int finishTime = 0;
+    int feedback_level = 0;
     int turnAroundTime = 0;
     float normTurnTime = 0;
-    int feedback_level=0;
     vector<string> timeProcessing;
 };
 struct schedule
@@ -52,9 +52,11 @@ schedule scheduleMaker(int schNo)
         break;
     case 6:
         schedule.schedulerName = "FB-1";
+        schedule.quantum = 1;
         break;
     case 7:
         schedule.schedulerName = "FB-2i";
+        schedule.quantum = 1;
         break;
     case 8:
         schedule.schedulerName = "Aging";
@@ -89,6 +91,7 @@ schedule scheduleMaker(int schNo, int quantum)
         break;
     case 6:
         schedule.schedulerName = "FB-1";
+        schedule.quantum = 1;
         break;
     case 7:
         schedule.schedulerName = "FB-2i";
@@ -225,6 +228,65 @@ void sortProcessbyAging(vector<process> &processList)
 {
     sort(processList.begin(), processList.end(), isMoreImportant);
 }
+void sendToTheHallows(process &p, vector<vector<process>> &feedback_queue)
+{
+    if (feedback_queue.size() == 0)
+    {
+        feedback_queue.push_back(vector<process>());
+    }
+    while (feedback_queue.size() <= p.feedback_level)
+    {
+        feedback_queue.push_back(vector<process>());
+    }
+    p.feedback_level++;
+    feedback_queue[p.feedback_level - 1].push_back(p);
+}
+void waitingInTheHallows(vector<vector<process>> &feedback_queue, int t)
+{
+
+    for (size_t i = 0; i < feedback_queue.size(); i++)
+    {
+        for (size_t j = 0; j < feedback_queue[i].size(); j++)
+        {
+            feedback_queue[i][j].waitTime++;
+            feedback_queue[i][j].timeProcessing[t] = ".";
+        }
+    }
+}
+void getFromTheHallows(vector<vector<process>> &feedback_queue, vector<process> &processingProcess)
+{
+    process ptemp = processingProcess[0];
+    if (processingProcess.size() == 0)
+    {
+        for (size_t i = 0; i < feedback_queue.size(); i++)
+        {
+            for (size_t j = 0; j < feedback_queue[i].size() != 0; j++)
+            {
+                processingProcess.push_back(feedback_queue[i][0]);
+                processRemover(feedback_queue[i][0], feedback_queue[i]);
+                return;
+            }
+        }
+    }
+    else
+    {
+
+        for (size_t i = 0; i < feedback_queue.size(); i++)
+        {
+            for (size_t j = 0; j < feedback_queue[i].size() != 0; j++)
+            {
+                processingProcess.pop_back();
+                processingProcess.push_back(feedback_queue[i][0]);
+                processRemover(feedback_queue[i][0], feedback_queue[i]);
+                if (ptemp.pname != processingProcess[0].pname)
+                {
+                    sendToTheHallows(ptemp, feedback_queue);
+                }
+                return;
+            }
+        }
+    }
+}
 // PRINTERS
 void printTrace(schedule schedule, vector<process> finsihed, int noCycles)
 {
@@ -235,7 +297,15 @@ void printTrace(schedule schedule, vector<process> finsihed, int noCycles)
     }
     else
     {
-        schedulePrinted = schedule.schedulerName + "-" + to_string(schedule.quantum);
+        if (schedule.schedulerName == "FB-1" || schedule.schedulerName == "FB-2i" || schedule.schedulerName == "Aging")
+        {
+            schedulePrinted = schedule.schedulerName;
+        }
+        else
+        {
+
+            schedulePrinted = schedule.schedulerName + "-" + to_string(schedule.quantum);
+        }
     }
     cout << schedulePrinted;
     switch (schedulePrinted.length())
@@ -281,7 +351,15 @@ void printStats(schedule schedule, vector<process> finsihed, int noCycles)
     }
     else
     {
-        schedulePrinted = schedule.schedulerName + "-" + to_string(schedule.quantum);
+        if (schedule.schedulerName == "FB-1" || schedule.schedulerName == "FB-2i")
+        {
+            schedulePrinted = schedule.schedulerName;
+        }
+        else
+        {
+
+            schedulePrinted = schedule.schedulerName + "-" + to_string(schedule.quantum);
+        }
     }
     cout << schedulePrinted;
     printf("\n");
@@ -715,15 +793,72 @@ int main()
         if (schedulers_filtered[i].schedulerName == "FB-1")
         {
             int t = 0;
-            vector < queue < process >> feedback_queues;
+            vector<vector<process>> feedback_queues;
             while (true)
             {
                 process p;
                 int q = schedulers_filtered[i].quantum;
                 checkArrival(notHereYetProcess, t, waitingProcess);
+                int feedback_empty = 1;
+                for (size_t m = 0; m < feedback_queues.size(); m++)
+                {
+                    for (size_t n = 0; n < feedback_queues[m].size(); n++)
+                    {
+                        feedback_empty = 0;
+                    }
+                }
+                if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0) && feedback_empty)
+                {
 
-
-                if (notHereYetProcess.size() == 0 && processingProcess.size() == 0 && waitingProcess.size() == 0 && feedback_queues.size() == 0)
+                    process p = waitingProcess.front();
+                    processingProcess.push_back(p);
+                    processRemover(p, waitingProcess);
+                }
+                if (!(processingProcess.size() == 0))
+                {
+                    while (q && processingProcess[0].tempServiceTime != 0)
+                    {
+                        waitingInTheHallows(feedback_queues, t);
+                        processingProcess[0].timeProcessing[t] = "*";
+                        t++;
+                        processingProcess[0].tempServiceTime--;
+                        q--;
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                    }
+                    if (processingProcess[0].tempServiceTime != 0)
+                    {
+                        if (waitingProcess.size() != 0)
+                        {
+                            sendToTheHallows(processingProcess[0], feedback_queues);
+                            process p = waitingProcess.back();
+                            processingProcess.pop_back();
+                            processingProcess.push_back(p);
+                            processRemover(p, waitingProcess);
+                        }
+                        else
+                        {
+                            getFromTheHallows(feedback_queues, processingProcess);
+                        }
+                    }
+                    else
+                    {
+                        processingProcess[0].finishTime = t;
+                        finishedProcess.push_back(processingProcess[0]);
+                        processingProcess.pop_back();
+                        if (waitingProcess.size() != 0)
+                        {
+                            process p = waitingProcess.front();
+                            processingProcess.push_back(p);
+                            processRemover(p, waitingProcess);
+                        }
+                        else
+                        {
+                            getFromTheHallows(feedback_queues, processingProcess);
+                        }
+                        waitingInTheHallows(feedback_queues, t);
+                    }
+                }
+                if (notHereYetProcess.size() == 0 && processingProcess.size() == 0 && waitingProcess.size() == 0)
                 {
                     break;
                 }
@@ -736,6 +871,77 @@ int main()
         }
         if (schedulers_filtered[i].schedulerName == "FB-2i")
         {
+            int t = 0;
+            vector<vector<process>> feedback_queues;
+            while (true)
+            {
+                process p;
+                int q = schedulers_filtered[i].quantum;
+                checkArrival(notHereYetProcess, t, waitingProcess);
+                int feedback_empty = 1;
+                for (size_t m = 0; m < feedback_queues.size(); m++)
+                {
+                    for (size_t n = 0; n < feedback_queues[m].size(); n++)
+                    {
+                        feedback_empty = 0;
+                    }
+                }
+                if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0) && feedback_empty)
+                {
+
+                    process p = waitingProcess.front();
+                    processingProcess.push_back(p);
+                    processRemover(p, waitingProcess);
+                }
+                if (!(processingProcess.size() == 0))
+                {
+                    while (q && processingProcess[0].tempServiceTime != 0)
+                    {
+                        waitingInTheHallows(feedback_queues, t);
+                        processingProcess[0].timeProcessing[t] = "*";
+                        t++;
+                        processingProcess[0].tempServiceTime--;
+                        q--;
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                    }
+                    if (processingProcess[0].tempServiceTime != 0)
+                    {
+                        if (waitingProcess.size() != 0)
+                        {
+                            sendToTheHallows(processingProcess[0], feedback_queues);
+                            process p = waitingProcess.back();
+                            processingProcess.pop_back();
+                            processingProcess.push_back(p);
+                            processRemover(p, waitingProcess);
+                        }
+                        else
+                        {
+                            getFromTheHallows(feedback_queues, processingProcess);
+                        }
+                    }
+                    else
+                    {
+                        processingProcess[0].finishTime = t;
+                        finishedProcess.push_back(processingProcess[0]);
+                        processingProcess.pop_back();
+                        if (waitingProcess.size() != 0)
+                        {
+                            process p = waitingProcess.front();
+                            processingProcess.push_back(p);
+                            processRemover(p, waitingProcess);
+                        }
+                        else
+                        {
+                            getFromTheHallows(feedback_queues, processingProcess);
+                        }
+                        waitingInTheHallows(feedback_queues, t);
+                    }
+                }
+                if (notHereYetProcess.size() == 0 && processingProcess.size() == 0 && waitingProcess.size() == 0)
+                {
+                    break;
+                }
+            }
 
             calculateTurnandNormTurnTime(finishedProcess);
             calculateScheduleStats(schedulers_filtered[i], finishedProcess, noProcesses);
