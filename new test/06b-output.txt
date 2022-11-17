@@ -1,0 +1,8 @@
+HRRN
+Process    |  A  |  B  |  C  |  D  |
+Arrival    |  0  |  1  |  2  |  3  |
+Service    |  1  |  9  |  1  |  9  | Mean|
+Finish     |  1  | 10  | 11  | 20  |-----|
+Turnaround |  1  |  9  |  9  | 17  | 9.00|
+NormTurn   | 1.00| 1.00| 9.00| 1.89| 3.22|
+

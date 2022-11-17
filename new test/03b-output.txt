@@ -1,0 +1,8 @@
+RR-4
+Process    |  A  |  B  |  C  |  D  |
+Arrival    |  0  |  1  |  2  |  3  |
+Service    |  1  |  9  |  1  |  9  | Mean|
+Finish     |  1  | 19  |  6  | 20  |-----|
+Turnaround |  1  | 18  |  4  | 17  |10.00|
+NormTurn   | 1.00| 2.00| 4.00| 1.89| 2.22|
+
