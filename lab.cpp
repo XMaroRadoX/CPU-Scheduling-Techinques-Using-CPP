@@ -138,6 +138,7 @@ void checkArrival(vector<process> &notHereYetProcess, int t, vector<process> &wa
         }
     }
 }
+
 void IamWaiting(vector<process> &waitingProcess, int t)
 {
     for (size_t i = 0; i < waitingProcess.size(); i++)
@@ -153,6 +154,17 @@ void processRemover(process &p1, vector<process> &ProcessList)
         if (p1.pname == ProcessList[i].pname)
         {
             ProcessList.erase(ProcessList.begin() + i);
+        }
+    }
+}
+void checkArrivalAging(vector<process> &notHereYetProcess, int t, vector<process> &waitingProcess)
+{
+    for (int i = 0; i < notHereYetProcess.size(); i++)
+    {
+        if (notHereYetProcess[i].arrivalTime == t)
+        {
+            waitingProcess.push_back(notHereYetProcess[i]);
+            processRemover(notHereYetProcess[i], notHereYetProcess);
         }
     }
 }
@@ -221,7 +233,7 @@ void IamMoreImportant(vector<process> &waitingProcess)
 }
 bool isMoreImportant(process p1, process p2)
 {
-    return (p1.tempServiceTime < p2.tempServiceTime);
+    return (p1.tempServiceTime > p2.tempServiceTime);
 }
 void sortProcessbyAging(vector<process> &processList)
 {
@@ -969,35 +981,31 @@ int main()
             {
                 process p;
                 int q = schedulers_filtered[i].quantum;
-                checkArrival(notHereYetProcess, t, waitingProcess);
+                checkArrivalAging(notHereYetProcess, t, waitingProcess);
+                sortProcessbyAging(waitingProcess);
                 if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0))
                 {
-
-                    sortProcessbyAging(waitingProcess);
-                    processingProcess.push_back(waitingProcess.back());
-                    waitingProcess.pop_back();
-                    IamWaiting(waitingProcess, t);
+                    processingProcess.push_back(waitingProcess[0]);
+                    processRemover(waitingProcess[0],waitingProcess);
+                    //  IamWaiting(waitingProcess, t);
                 }
+                resetPriority(processingProcess);
                 if (!(processingProcess.size() == 0))
                 {
                     while (q)
                     {
                         processingProcess[0].timeProcessing[t] = "*";
-                        checkArrival(notHereYetProcess, t, waitingProcess);
                         IamWaiting(waitingProcess, t);
                         t++;
+                        checkArrivalAging(notHereYetProcess, t, waitingProcess);
                         q--;
-                        sortProcessbyAging(waitingProcess);
+                        // sortProcessbyAging(waitingProcess);
                     }
-
                     if (!q)
                     {
                         IamMoreImportant(waitingProcess);
-                        resetPriority(processingProcess);
-                        waitingProcess.insert(waitingProcess.begin(), processingProcess[0]);
+                        waitingProcess.push_back(processingProcess[0]);
                         processingProcess.pop_back();
-                        sortProcessbyAging(waitingProcess);
-
                         if (t == noCycles)
                         {
                             for (size_t k = 0; k < waitingProcess.size(); k++)
