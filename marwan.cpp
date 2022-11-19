@@ -216,14 +216,14 @@ void IamMoreImportant(vector<process> &waitingProcess, int t)
 {
     for (size_t i = 0; i < waitingProcess.size(); i++)
     {
-        waitingProcess[i].tempServiceTime++;
+       // waitingProcess[i].serviceTime++;
         waitingProcess[i].waitTime++;
         waitingProcess[i].timeProcessing[t] = ".";
     }
 }
 bool isMoreImportant(process p1, process p2)
 {
-    return (p1.tempServiceTime  < p2.tempServiceTime);
+    return (p1.serviceTime < p2.serviceTime);
 }
 void sortProcessbyAging(vector<process> &processList)
 {
@@ -286,13 +286,6 @@ void getFromTheHallows(vector<vector<process>> &feedback_queue, vector<process> 
                 return;
             }
         }
-    }
-}
-void resetPriority(vector<process> processList)
-{
-    for (size_t i = 0; i < processList.size(); i++)
-    {
-        processList[i].tempServiceTime = processList[i].serviceTime;
     }
 }
 // PRINTERS
@@ -967,7 +960,6 @@ int main()
         if (schedulers_filtered[i].schedulerName == "Aging")
         {
             int t = 0;
-            process ptemp;
             while (true)
             {
                 process p;
@@ -988,30 +980,32 @@ int main()
                         t++;
                         q--;
                         checkArrival(notHereYetProcess, t, waitingProcess);
-                        IamMoreImportant(waitingProcess, t);
                         sortProcessbyAging(waitingProcess);
+                        IamMoreImportant(waitingProcess, t);
+                    }
+                    for (size_t i = 0; i < waitingProcess.size(); i++)
+                    {
+                        waitingProcess[i].serviceTime++;
                     }
 
-                    if (!q)
-                    {
-                        checkArrival(notHereYetProcess, t, waitingProcess);
-                 
+         //           if (!q)
+                 //   {
+                       // checkArrival(notHereYetProcess, t, waitingProcess);
+                        waitingProcess.push_back(processingProcess[0]);
                         processingProcess.clear();
+                        sortProcessbyAging(waitingProcess);
                         if (waitingProcess.size() != 0)
                         {
                             process p = waitingProcess.back();
                             processingProcess.push_back(p);
                             processRemover(p, waitingProcess);
-                            waitingProcess.push_back(ptemp);
-                            sortProcessbyAging(waitingProcess);
                         }
                         else
                         {
-                            waitingProcess.push_back(ptemp);
-                            sortProcessbyAging(waitingProcess);
                             checkArrival(notHereYetProcess, t, waitingProcess);
                         }
-                        IamMoreImportant(waitingProcess, t);
+                     //   IamMoreImportant(waitingProcess, t);
+                      //  q++;
                         if (t == noCycles - 1)
                         {
                             for (size_t k = 0; k < waitingProcess.size(); k++)
@@ -1028,7 +1022,7 @@ int main()
                             }
                             break;
                         }
-                    }
+                    //}
                 }
             }
             calculateTurnandNormTurnTime(finishedProcess);
