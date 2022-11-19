@@ -138,6 +138,7 @@ void checkArrival(vector<process> &notHereYetProcess, int t, vector<process> &wa
         }
     }
 }
+
 void IamWaiting(vector<process> &waitingProcess, int t)
 {
     for (size_t i = 0; i < waitingProcess.size(); i++)
@@ -153,6 +154,17 @@ void processRemover(process &p1, vector<process> &ProcessList)
         if (p1.pname == ProcessList[i].pname)
         {
             ProcessList.erase(ProcessList.begin() + i);
+        }
+    }
+}
+void checkArrivalAging(vector<process> &notHereYetProcess, int t, vector<process> &waitingProcess)
+{
+    for (int i = 0; i < notHereYetProcess.size(); i++)
+    {
+        if (notHereYetProcess[i].arrivalTime == t)
+        {
+            waitingProcess.push_back(notHereYetProcess[i]);
+            processRemover(notHereYetProcess[i], notHereYetProcess);
         }
     }
 }
@@ -212,18 +224,16 @@ void sortProcessbyHRRN(vector<process> &processList)
 {
     sort(processList.begin(), processList.end(), isShorterHRRNProcess);
 }
-void IamMoreImportant(vector<process> &waitingProcess, int t)
+void IamMoreImportant(vector<process> &waitingProcess)
 {
     for (size_t i = 0; i < waitingProcess.size(); i++)
     {
-        // waitingProcess[i].serviceTime++;
-        waitingProcess[i].waitTime++;
-        waitingProcess[i].timeProcessing[t] = ".";
+        waitingProcess[i].tempServiceTime++;
     }
 }
 bool isMoreImportant(process p1, process p2)
 {
-    return (p1.serviceTime < p2.serviceTime);
+    return (p1.tempServiceTime > p2.tempServiceTime);
 }
 void sortProcessbyAging(vector<process> &processList)
 {
@@ -286,6 +296,13 @@ void getFromTheHallows(vector<vector<process>> &feedback_queue, vector<process> 
                 return;
             }
         }
+    }
+}
+void resetPriority(vector<process> &processList)
+{
+    for (size_t i = 0; i < processList.size(); i++)
+    {
+        processList[i].tempServiceTime = processList[i].serviceTime;
     }
 }
 // PRINTERS
@@ -964,65 +981,48 @@ int main()
             {
                 process p;
                 int q = schedulers_filtered[i].quantum;
-                checkArrival(notHereYetProcess, t, waitingProcess);
+                checkArrivalAging(notHereYetProcess, t, waitingProcess);
+                sortProcessbyAging(waitingProcess);
                 if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0))
                 {
-                    sortProcessbyAging(waitingProcess);
-                    process p = waitingProcess.back();
-                    processingProcess.push_back(p);
-                    processRemover(p, waitingProcess);
+                    processingProcess.push_back(waitingProcess[0]);
+                    processRemover(waitingProcess[0],waitingProcess);
+                    //  IamWaiting(waitingProcess, t);
                 }
+                resetPriority(processingProcess);
                 if (!(processingProcess.size() == 0))
                 {
                     while (q)
                     {
                         processingProcess[0].timeProcessing[t] = "*";
+                        IamWaiting(waitingProcess, t);
                         t++;
+                        checkArrivalAging(notHereYetProcess, t, waitingProcess);
                         q--;
-                        checkArrival(notHereYetProcess, t, waitingProcess);
-                        sortProcessbyAging(waitingProcess);
-                        IamMoreImportant(waitingProcess, t);
+                        // sortProcessbyAging(waitingProcess);
                     }
-                    for (size_t i = 0; i < waitingProcess.size(); i++)
+                    if (!q)
                     {
-                        waitingProcess[i].serviceTime++;
-                    }
-
-                    //           if (!q)
-                    //   {
-                    // checkArrival(notHereYetProcess, t, waitingProcess);
-                    waitingProcess.push_back(processingProcess[0]);
-                    processingProcess.clear();
-                    sortProcessbyAging(waitingProcess);
-                    if (waitingProcess.size() != 0)
-                    {
-                        process p = waitingProcess.back();
-                        processingProcess.push_back(p);
-                        processRemover(p, waitingProcess);
-                    }
-                    else
-                    {
-                        checkArrival(notHereYetProcess, t, waitingProcess);
-                    }
-                    //   IamMoreImportant(waitingProcess, t);
-                    //  q++;
-                    if (t == noCycles)
-                    {
-                        for (size_t k = 0; k < waitingProcess.size(); k++)
+                        IamMoreImportant(waitingProcess);
+                        waitingProcess.push_back(processingProcess[0]);
+                        processingProcess.pop_back();
+                        if (t == noCycles)
                         {
-                            finishedProcess.push_back(waitingProcess[k]);
+                            for (size_t k = 0; k < waitingProcess.size(); k++)
+                            {
+                                finishedProcess.push_back(waitingProcess[k]);
+                            }
+                            for (size_t k = 0; k < processingProcess.size(); k++)
+                            {
+                                finishedProcess.push_back(processingProcess[k]);
+                            }
+                            for (size_t k = 0; k < notHereYetProcess.size(); k++)
+                            {
+                                finishedProcess.push_back(notHereYetProcess[k]);
+                            }
+                            break;
                         }
-                        for (size_t k = 0; k < processingProcess.size(); k++)
-                        {
-                            finishedProcess.push_back(processingProcess[k]);
-                        }
-                        for (size_t k = 0; k < notHereYetProcess.size(); k++)
-                        {
-                            finishedProcess.push_back(notHereYetProcess[k]);
-                        }
-                        break;
                     }
-                    //}
                 }
             }
             calculateTurnandNormTurnTime(finishedProcess);
