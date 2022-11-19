@@ -212,18 +212,16 @@ void sortProcessbyHRRN(vector<process> &processList)
 {
     sort(processList.begin(), processList.end(), isShorterHRRNProcess);
 }
-void IamMoreImportant(vector<process> &waitingProcess, int t)
+void IamMoreImportant(vector<process> &waitingProcess)
 {
     for (size_t i = 0; i < waitingProcess.size(); i++)
     {
         waitingProcess[i].tempServiceTime++;
-        waitingProcess[i].waitTime++;
-        waitingProcess[i].timeProcessing[t] = ".";
     }
 }
 bool isMoreImportant(process p1, process p2)
 {
-    return (p1.tempServiceTime  < p2.tempServiceTime);
+    return (p1.tempServiceTime < p2.tempServiceTime);
 }
 void sortProcessbyAging(vector<process> &processList)
 {
@@ -288,7 +286,7 @@ void getFromTheHallows(vector<vector<process>> &feedback_queue, vector<process> 
         }
     }
 }
-void resetPriority(vector<process> processList)
+void resetPriority(vector<process> &processList)
 {
     for (size_t i = 0; i < processList.size(); i++)
     {
@@ -967,7 +965,6 @@ int main()
         if (schedulers_filtered[i].schedulerName == "Aging")
         {
             int t = 0;
-            process ptemp;
             while (true)
             {
                 process p;
@@ -975,44 +972,33 @@ int main()
                 checkArrival(notHereYetProcess, t, waitingProcess);
                 if ((!waitingProcess.size() == 0) && (processingProcess.size() == 0))
                 {
+
                     sortProcessbyAging(waitingProcess);
-                    process p = waitingProcess.back();
-                    processingProcess.push_back(p);
-                    processRemover(p, waitingProcess);
+                    processingProcess.push_back(waitingProcess.back());
+                    waitingProcess.pop_back();
+                    IamWaiting(waitingProcess, t);
                 }
                 if (!(processingProcess.size() == 0))
                 {
                     while (q)
                     {
                         processingProcess[0].timeProcessing[t] = "*";
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                        IamWaiting(waitingProcess, t);
                         t++;
                         q--;
-                        checkArrival(notHereYetProcess, t, waitingProcess);
-                        IamMoreImportant(waitingProcess, t);
                         sortProcessbyAging(waitingProcess);
                     }
 
                     if (!q)
                     {
-                        checkArrival(notHereYetProcess, t, waitingProcess);
-                 
-                        processingProcess.clear();
-                        if (waitingProcess.size() != 0)
-                        {
-                            process p = waitingProcess.back();
-                            processingProcess.push_back(p);
-                            processRemover(p, waitingProcess);
-                            waitingProcess.push_back(ptemp);
-                            sortProcessbyAging(waitingProcess);
-                        }
-                        else
-                        {
-                            waitingProcess.push_back(ptemp);
-                            sortProcessbyAging(waitingProcess);
-                            checkArrival(notHereYetProcess, t, waitingProcess);
-                        }
-                        IamMoreImportant(waitingProcess, t);
-                        if (t == noCycles - 1)
+                        IamMoreImportant(waitingProcess);
+                        resetPriority(processingProcess);
+                        waitingProcess.insert(waitingProcess.begin(), processingProcess[0]);
+                        processingProcess.pop_back();
+                        sortProcessbyAging(waitingProcess);
+
+                        if (t == noCycles)
                         {
                             for (size_t k = 0; k < waitingProcess.size(); k++)
                             {

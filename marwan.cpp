@@ -216,7 +216,7 @@ void IamMoreImportant(vector<process> &waitingProcess, int t)
 {
     for (size_t i = 0; i < waitingProcess.size(); i++)
     {
-       // waitingProcess[i].serviceTime++;
+        // waitingProcess[i].serviceTime++;
         waitingProcess[i].waitTime++;
         waitingProcess[i].timeProcessing[t] = ".";
     }
@@ -988,40 +988,40 @@ int main()
                         waitingProcess[i].serviceTime++;
                     }
 
-         //           if (!q)
-                 //   {
-                       // checkArrival(notHereYetProcess, t, waitingProcess);
-                        waitingProcess.push_back(processingProcess[0]);
-                        processingProcess.clear();
-                        sortProcessbyAging(waitingProcess);
-                        if (waitingProcess.size() != 0)
+                    //           if (!q)
+                    //   {
+                    // checkArrival(notHereYetProcess, t, waitingProcess);
+                    waitingProcess.push_back(processingProcess[0]);
+                    processingProcess.clear();
+                    sortProcessbyAging(waitingProcess);
+                    if (waitingProcess.size() != 0)
+                    {
+                        process p = waitingProcess.back();
+                        processingProcess.push_back(p);
+                        processRemover(p, waitingProcess);
+                    }
+                    else
+                    {
+                        checkArrival(notHereYetProcess, t, waitingProcess);
+                    }
+                    //   IamMoreImportant(waitingProcess, t);
+                    //  q++;
+                    if (t == noCycles)
+                    {
+                        for (size_t k = 0; k < waitingProcess.size(); k++)
                         {
-                            process p = waitingProcess.back();
-                            processingProcess.push_back(p);
-                            processRemover(p, waitingProcess);
+                            finishedProcess.push_back(waitingProcess[k]);
                         }
-                        else
+                        for (size_t k = 0; k < processingProcess.size(); k++)
                         {
-                            checkArrival(notHereYetProcess, t, waitingProcess);
+                            finishedProcess.push_back(processingProcess[k]);
                         }
-                     //   IamMoreImportant(waitingProcess, t);
-                      //  q++;
-                        if (t == noCycles - 1)
+                        for (size_t k = 0; k < notHereYetProcess.size(); k++)
                         {
-                            for (size_t k = 0; k < waitingProcess.size(); k++)
-                            {
-                                finishedProcess.push_back(waitingProcess[k]);
-                            }
-                            for (size_t k = 0; k < processingProcess.size(); k++)
-                            {
-                                finishedProcess.push_back(processingProcess[k]);
-                            }
-                            for (size_t k = 0; k < notHereYetProcess.size(); k++)
-                            {
-                                finishedProcess.push_back(notHereYetProcess[k]);
-                            }
-                            break;
+                            finishedProcess.push_back(notHereYetProcess[k]);
                         }
+                        break;
+                    }
                     //}
                 }
             }
