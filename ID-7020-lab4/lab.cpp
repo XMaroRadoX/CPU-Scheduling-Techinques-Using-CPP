@@ -987,7 +987,6 @@ int main()
                 {
                     processingProcess.push_back(waitingProcess[0]);
                     processRemover(waitingProcess[0],waitingProcess);
-                    //  IamWaiting(waitingProcess, t);
                 }
                 resetPriority(processingProcess);
                 if (!(processingProcess.size() == 0))
@@ -999,7 +998,6 @@ int main()
                         t++;
                         checkArrivalAging(notHereYetProcess, t, waitingProcess);
                         q--;
-                        // sortProcessbyAging(waitingProcess);
                     }
                     if (!q)
                     {
