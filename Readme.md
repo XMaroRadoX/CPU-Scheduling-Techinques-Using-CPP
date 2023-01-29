@@ -50,7 +50,7 @@ activities, and are commonly used in multi-process and multi-threaded applicatio
 
 * Guide.txt contains information on how to configure the scheduler
 * You can create your own test cases just add them to the `tests` folder and make sure to add a bash line to test.sh
-* **in test.sh you will find already made demo with 12 diffrent scniaro**
+* **in test.sh you will find already made demo with 12 diffrent sceniaros**
 
 ### Sample Case 🔬
 
