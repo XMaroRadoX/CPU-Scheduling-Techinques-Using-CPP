@@ -1,9 +1,9 @@
 .ONESHELL:
 CC = g++ -g
-all: clean binary
+all: clean binary run
 binary:
-	$(CC) lab.cpp -o lab4
+	$(CC) Scheduler.cpp -o Scheduler
 run: binary
-	@ ./lab4
+	@ bash test.sh
 clean:
-	rm -f lab4
+	rm -f Scheduler

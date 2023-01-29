@@ -1,0 +1,29 @@
+// REFRENCE IN QUESTION IS WILLAM STALLING BOOK Operating System 7th Edition
+
+Input Format: 
+ Line1 “trace” or “stats”. 
+“trace” is used to ask your program to visualize the processes switching over the CPU – just like the 
+Figure 9.5 in textbook (or slide 30 in the class presentation). You can see 01a-output.txt 
+as an example. 
+“stats” is used to ask your program to  write some statistics on the scheduled processes  – just like 
+Table 9.5 in  textbook (or slide 31 in the class presentation). You can see 01b-output.txt 
+as an example. 
+
+
+Line2. a comma-separated list telling which CPU scheduling policies to be analyzed/visualized along with 
+their  parameters,  if  applicable.  Each  algorithm  is  represented  by  a  number  as  listed  in  the 
+introduction section and as shown in the attached testcases.  
+
+Round Robin has a parameter specifying the quantum to be used. Therefore, a policy entered as 2-
+4 means Round Robin with quantum = 4. 
+
+
+Line3. An integer specifying the last instant to be used in your simulation and to be shown on the timeline. 
+
+Line4. An integer specifying the number of processes to be simulated. None of the processes is making a blocking call. 
+
+Line5. Start of description of processes. Each process is to be described on a separate line. For algorithms 
+1 through 7, each process is described using a comma-separated list specifying: 
+- One character specifying a process name 
+- Arrival Time 
+- Service Time 
